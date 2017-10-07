@@ -41,10 +41,10 @@ module.exports={
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/schteppe/cannon.js.git"
+    "url": "https://github.com/Inviernos/cannon.js",
   },
   "bugs": {
-    "url": "https://github.com/schteppe/cannon.js/issues"
+    "url": "https://github.com/Inviernos/cannon.js/issues"
   },
   "licenses": [
     {
@@ -118,10 +118,11 @@ module.exports = {
     Trimesh :                       _dereq_('./shapes/Trimesh'),
     Vec3 :                          _dereq_('./math/Vec3'),
     Vec3Pool :                      _dereq_('./utils/Vec3Pool'),
+	Cone :                          _dereq_('./shapes/Cone'),
     World :                         _dereq_('./world/World'),
 };
 
-},{"../package.json":1,"./collision/AABB":3,"./collision/ArrayCollisionMatrix":4,"./collision/Broadphase":5,"./collision/GridBroadphase":6,"./collision/NaiveBroadphase":7,"./collision/ObjectCollisionMatrix":8,"./collision/Ray":9,"./collision/RaycastResult":10,"./collision/SAPBroadphase":11,"./constraints/ConeTwistConstraint":12,"./constraints/Constraint":13,"./constraints/DistanceConstraint":14,"./constraints/HingeConstraint":15,"./constraints/LockConstraint":16,"./constraints/PointToPointConstraint":17,"./equations/ContactEquation":19,"./equations/Equation":20,"./equations/FrictionEquation":21,"./equations/RotationalEquation":22,"./equations/RotationalMotorEquation":23,"./material/ContactMaterial":24,"./material/Material":25,"./math/Mat3":27,"./math/Quaternion":28,"./math/Vec3":30,"./objects/Body":31,"./objects/RaycastVehicle":32,"./objects/RigidVehicle":33,"./objects/SPHSystem":34,"./objects/Spring":35,"./shapes/Box":37,"./shapes/ConvexPolyhedron":38,"./shapes/Cylinder":39,"./shapes/Heightfield":40,"./shapes/Particle":41,"./shapes/Plane":42,"./shapes/Shape":43,"./shapes/Sphere":44,"./shapes/Trimesh":45,"./solver/GSSolver":46,"./solver/Solver":47,"./solver/SplitSolver":48,"./utils/EventTarget":49,"./utils/Pool":51,"./utils/Vec3Pool":54,"./world/Narrowphase":55,"./world/World":56}],3:[function(_dereq_,module,exports){
+},{"../package.json":1,"./collision/AABB":3,"./collision/ArrayCollisionMatrix":4,"./collision/Broadphase":5,"./collision/GridBroadphase":6,"./collision/NaiveBroadphase":7,"./collision/ObjectCollisionMatrix":8,"./collision/Ray":9,"./collision/RaycastResult":10,"./collision/SAPBroadphase":11,"./constraints/ConeTwistConstraint":12,"./constraints/Constraint":13,"./constraints/DistanceConstraint":14,"./constraints/HingeConstraint":15,"./constraints/LockConstraint":16,"./constraints/PointToPointConstraint":17,"./equations/ContactEquation":19,"./equations/Equation":20,"./equations/FrictionEquation":21,"./equations/RotationalEquation":22,"./equations/RotationalMotorEquation":23,"./material/ContactMaterial":24,"./material/Material":25,"./math/Mat3":27,"./math/Quaternion":28,"./math/Vec3":30,"./objects/Body":31,"./objects/RaycastVehicle":32,"./objects/RigidVehicle":33,"./objects/SPHSystem":34,"./objects/Spring":35,"./shapes/Box":37,"./shapes/ConvexPolyhedron":38,"./shapes/Cylinder":39,"./shapes/Heightfield":40,"./shapes/Particle":41,"./shapes/Plane":42,"./shapes/Shape":43,"./shapes/Sphere":44,"./shapes/Trimesh":45,"./solver/GSSolver":46,"./solver/Solver":47,"./solver/SplitSolver":48,"./utils/EventTarget":49,"./utils/Pool":51,"./utils/Vec3Pool":54,"./world/Narrowphase":55,"./world/World":56, "/.shapes/Cone":57}],3:[function(_dereq_,module,exports){
 var Vec3 = _dereq_('../math/Vec3');
 var Utils = _dereq_('../utils/Utils');
 
@@ -7578,6 +7579,8 @@ WheelInfo.prototype.updateWheel = function(chassis){
     }
 };
 },{"../collision/RaycastResult":10,"../math/Transform":29,"../math/Vec3":30,"../utils/Utils":53}],37:[function(_dereq_,module,exports){
+
+
 module.exports = Box;
 
 var Shape = _dereq_('./Shape');
@@ -7814,6 +7817,120 @@ Box.prototype.calculateWorldAABB = function(pos,quat,min,max){
     // });
 };
 
+},{"../math/Vec3":30,"./ConvexPolyhedron":38,"./Shape":43}],57:[function(_dereq_,module,exports){
+module.exports = Cone;
+
+var Shape = _dereq_('./Shape');
+var Vec3 = _dereq_('../math/Vec3');
+var ConvexPolyhedron = _dereq_('./ConvexPolyhedron');
+
+/**
+ * Conical shape
+ * @class Cone
+ * @constructor
+ * @extends Shape
+ * @param{Number} halfHeight
+ * @param {Number} radius The radius of the cone, a non-negative number.
+ */
+function Cone(height,radius){
+    Shape.call(this, {
+        type: Shape.types.CONE
+    });
+
+	
+	this.height = height;
+	
+    this.radius = radius !== undefined ? radius : 1.0;
+
+    if(this.radius < 0){
+        throw new Error('The sphere radius cannot be negative.');
+    }
+
+    this.convexPolyhedronRepresentation = null;
+
+    this.updateConvexPolyhedronRepresentation();
+    this.updateBoundingSphereRadius();
+}
+
+
+Cone.prototype = new Shape();
+Cone.prototype.constructor = Cone;
+
+
+//need to wor on this
+Cone.prototype.updateConvexPolyhedronRepresentation = function(){
+    
+	//Vertex
+    var V = Vec3;
+	cos = Math.cos,
+    sin = Math.sin;
+    verts = [],
+    axes = [],
+    faces = [],
+    bottomface = [],
+	topface = []
+	N = 8
+	
+	// First bottom point
+    verts.push(new Vec3(this.radius*cos(0),
+                               this.radius*sin(0),
+                               -height*0.5));
+    bottomface.push(0);
+	
+	 // First top point
+    verts.push(new Vec3(0,0,height*0.5));
+   
+    topface.push(1);
+	
+	for(var i=0; i<N; i++){
+        var theta = 2*Math.PI/N * (i+1);
+        var thetaN = 2*Math.PI/N * (i+0.5);
+        if(i<N-1){
+            // Bottom
+            verts.push(new Vec3(radiusBottom*cos(theta),
+                                       radiusBottom*sin(theta),
+                                       -height*0.5));
+            bottomface.push(2 + i);
+     
+
+            // Face
+            faces.push([i+2, 1, 2 * i]);
+        } 
+		else {
+		faces.push([0,1, 8]); // Connect
+        }
+
+  
+    }
+
+
+    var h = new ConvexPolyhedron(verts, indices);
+    this.convexPolyhedronRepresentation = h;
+    h.material = this.material;
+};
+
+
+//Calculate the inertia for a cone
+Cone.prototype.calculateLocalInertia = function(mass,target){
+    target = target || new Vec3();
+    target.x = ((3*mass)/20) + ((this.radius*this.radius)+ (4 * (this.height*this.height)));
+    target.y = ((3*mass)/20) + ((this.radius*this.radius)+ (4 * (this.height*this.height)));
+    target.z = (3*mass* (this.radius*this.radius) )/  10;
+    return target;
+};
+
+//Calculate the volume for a cone
+Cone.prototype.volume = function(){
+    return  (this.radius*this.radius) * Math.PI * ((this.height) / 3.0);
+};
+
+//Update the radius when using bounding spere checks
+Cone.prototype.updateBoundingSphereRadius = function(){
+    this.boundingSphereRadius = this.radius;
+};
+	
+	
+	
 },{"../math/Vec3":30,"./ConvexPolyhedron":38,"./Shape":43}],38:[function(_dereq_,module,exports){
 module.exports = ConvexPolyhedron;
 
@@ -9515,7 +9632,8 @@ Shape.types = {
     HEIGHTFIELD:32,
     PARTICLE:64,
     CYLINDER:128,
-    TRIMESH:256
+    TRIMESH:256, 
+	CONE:512
 };
 
 
