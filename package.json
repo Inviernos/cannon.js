@@ -2,7 +2,7 @@
   "name": "cannon",
   "version": "0.6.2",
   "description": "A lightweight 3D physics engine written in JavaScript.",
-  "homepage": "https://github.com/schteppe/cannon.js",
+  "homepage": "https://github.com/Inviernos/cannon.js",
   "author": "Stefan Hedman <schteppe@gmail.com> (http://steffe.se)",
   "keywords": [
     "cannon.js",
@@ -17,10 +17,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/schteppe/cannon.js.git"
+    "url": "https://github.com/Inviernos/cannon.js.git"
   },
   "bugs": {
-    "url": "https://github.com/schteppe/cannon.js/issues"
+    "url": "https://github.com/Inviernos/cannon.js/issues"
   },
   "licenses": [
     {
