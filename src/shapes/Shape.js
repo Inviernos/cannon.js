@@ -9,15 +9,10 @@ var Material = require('../material/Material');
  * Base class for shapes
  * @class Shape
  * @constructor
- * @param {object} [options]
- * @param {number} [options.collisionFilterGroup=1]
- * @param {number} [options.collisionFilterMask=-1]
- * @param {number} [options.collisionResponse=true]
- * @param {number} [options.material=null]
  * @author schteppe
+ * @todo Should have a mechanism for caching bounding sphere radius instead of calculating it each time
  */
-function Shape(options){
-    options = options || {};
+function Shape(){
 
     /**
      * Identifyer of the Shape.
@@ -31,7 +26,7 @@ function Shape(options){
      * @type {Number}
      * @see Shape.types
      */
-    this.type = options.type || 0;
+    this.type = 0;
 
     /**
      * The local bounding sphere radius of this shape.
@@ -43,33 +38,19 @@ function Shape(options){
      * Whether to produce contact forces when in contact with other bodies. Note that contacts will be generated, but they will be disabled.
      * @property {boolean} collisionResponse
      */
-    this.collisionResponse = options.collisionResponse ? options.collisionResponse : true;
-
-    /**
-     * @property {Number} collisionFilterGroup
-     */
-    this.collisionFilterGroup = options.collisionFilterGroup !== undefined ? options.collisionFilterGroup : 1;
-
-    /**
-     * @property {Number} collisionFilterMask
-     */
-    this.collisionFilterMask = options.collisionFilterMask !== undefined ? options.collisionFilterMask : -1;
+    this.collisionResponse = true;
 
     /**
      * @property {Material} material
      */
-    this.material = options.material ? options.material : null;
-
-    /**
-     * @property {Body} body
-     */
-    this.body = null;
+    this.material = null;
 }
 Shape.prototype.constructor = Shape;
 
 /**
  * Computes the bounding sphere radius. The result is stored in the property .boundingSphereRadius
  * @method updateBoundingSphereRadius
+ * @return {Number}
  */
 Shape.prototype.updateBoundingSphereRadius = function(){
     throw "computeBoundingSphereRadius() not implemented for shape type "+this.type;
@@ -87,8 +68,7 @@ Shape.prototype.volume = function(){
 /**
  * Calculates the inertia in the local frame for this shape.
  * @method calculateLocalInertia
- * @param {Number} mass
- * @param {Vec3} target
+ * @return {Vec3}
  * @see http://en.wikipedia.org/wiki/List_of_moments_of_inertia
  */
 Shape.prototype.calculateLocalInertia = function(mass,target){

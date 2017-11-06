@@ -67,29 +67,6 @@ module.exports = {
         test.done();
     },
 
-    getTriangle: function(test){
-        var hfShape = createHeightfield({
-            elementSize: 1,
-            minValue: 0,
-            size: 2
-        });
-        var a = new Vec3();
-        var b = new Vec3();
-        var c = new Vec3();
-
-        hfShape.getTriangle(0, 0, false, a, b, c);
-        test.deepEqual(a, new Vec3(0, 0, 1));
-        test.deepEqual(b, new Vec3(1, 0, 1));
-        test.deepEqual(c, new Vec3(0, 1, 1));
-
-        hfShape.getTriangle(0, 0, true, a, b, c);
-        test.deepEqual(a, new Vec3(1, 1, 1));
-        test.deepEqual(b, new Vec3(0, 1, 1));
-        test.deepEqual(c, new Vec3(1, 0, 1));
-
-        test.done();
-    },
-
     getRectMinMax: function(test){
         var hfShape = createHeightfield();
         var minMax = [];
@@ -99,22 +76,9 @@ module.exports = {
     },
 
     getHeightAt: function(test){
-        var hfShape = createHeightfield({
-            size: 2,
-            elementSize: 1,
-            linear: true
-        });
+        var hfShape = createHeightfield();
         console.warn('add more tests here');
-        var h0 = hfShape.getHeightAt(0, 0);
-        var h1 = hfShape.getHeightAt(0.25, 0.25);
-        var h2 = hfShape.getHeightAt(0.75, 0.75);
-        var h3 = hfShape.getHeightAt(0.99, 0.99);
-
-        test.equal(h0, 0);
-        test.ok(h0 < h1);
-        test.ok(h1 < h2);
-        test.ok(h2 < h3);
-
+        hfShape.getHeightAt(0, 0);
         test.done();
     },
 
@@ -163,11 +127,7 @@ function createHeightfield(options){
     for (var i = 0; i < size; i++) {
         matrix.push([]);
         for (var j = 0; j < size; j++) {
-            if(options.linear){
-                matrix[i].push(i + j);
-            } else {
-                matrix[i].push(1);
-            }
+            matrix[i].push(1);
         }
     }
     var hfShape = new Heightfield(matrix, options);

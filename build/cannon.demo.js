@@ -1093,6 +1093,31 @@ CANNON.Demo.prototype.shape2mesh = function(body){
             geometry.computeFaceNormals();
             mesh = new THREE.Mesh(geometry, this.currentMaterial);
             break;
+		
+		case CANNON.Shape.types.CONE:
+			 var geo = new THREE.Geometry();
+
+            // Add vertices
+            for (var i = 0; i < shape.vertices.length; i++) {
+                var v = shape.vertices[i];
+                geo.vertices.push(new THREE.Vector3(v.x, v.y, v.z));
+            }
+
+            for(var i=0; i < shape.faces.length; i++){
+                var face = shape.faces[i];
+
+                // add triangles
+                var a = face[0];
+                for (var j = 1; j < face.length - 1; j++) {
+                    var b = face[j];
+                    var c = face[j + 1];
+                    geo.faces.push(new THREE.Face3(a, b, c));
+                }
+            }
+            geo.computeBoundingSphere();
+            geo.computeFaceNormals();
+            mesh = new THREE.Mesh( geo, this.currentMaterial );
+            break;
 
         default:
             throw "Visual type not recognized: "+shape.type;

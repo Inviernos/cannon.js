@@ -118,12 +118,41 @@ AABB.prototype.clone = function(){
  * @param  {AABB} aabb
  */
 AABB.prototype.extend = function(aabb){
-    this.lowerBound.x = Math.min(this.lowerBound.x, aabb.lowerBound.x);
-    this.upperBound.x = Math.max(this.upperBound.x, aabb.upperBound.x);
-    this.lowerBound.y = Math.min(this.lowerBound.y, aabb.lowerBound.y);
-    this.upperBound.y = Math.max(this.upperBound.y, aabb.upperBound.y);
-    this.lowerBound.z = Math.min(this.lowerBound.z, aabb.lowerBound.z);
-    this.upperBound.z = Math.max(this.upperBound.z, aabb.upperBound.z);
+    // Extend lower bound
+    var l = aabb.lowerBound.x;
+    if(this.lowerBound.x > l){
+        this.lowerBound.x = l;
+    }
+
+    // Upper
+    var u = aabb.upperBound.x;
+    if(this.upperBound.x < u){
+        this.upperBound.x = u;
+    }
+
+    // Extend lower bound
+    var l = aabb.lowerBound.y;
+    if(this.lowerBound.y > l){
+        this.lowerBound.y = l;
+    }
+
+    // Upper
+    var u = aabb.upperBound.y;
+    if(this.upperBound.y < u){
+        this.upperBound.y = u;
+    }
+
+    // Extend lower bound
+    var l = aabb.lowerBound.z;
+    if(this.lowerBound.z > l){
+        this.lowerBound.z = l;
+    }
+
+    // Upper
+    var u = aabb.upperBound.z;
+    if(this.upperBound.z < u){
+        this.upperBound.z = u;
+    }
 };
 
 /**
@@ -143,20 +172,10 @@ AABB.prototype.overlaps = function(aabb){
     // |--------|
     // l1       u1
 
-    var overlapsX = ((l2.x <= u1.x && u1.x <= u2.x) || (l1.x <= u2.x && u2.x <= u1.x));
-    var overlapsY = ((l2.y <= u1.y && u1.y <= u2.y) || (l1.y <= u2.y && u2.y <= u1.y));
-    var overlapsZ = ((l2.z <= u1.z && u1.z <= u2.z) || (l1.z <= u2.z && u2.z <= u1.z));
-
-    return overlapsX && overlapsY && overlapsZ;
+    return ((l2.x <= u1.x && u1.x <= u2.x) || (l1.x <= u2.x && u2.x <= u1.x)) &&
+           ((l2.y <= u1.y && u1.y <= u2.y) || (l1.y <= u2.y && u2.y <= u1.y)) &&
+           ((l2.z <= u1.z && u1.z <= u2.z) || (l1.z <= u2.z && u2.z <= u1.z));
 };
-
-// Mostly for debugging
-AABB.prototype.volume = function(){
-    var l = this.lowerBound,
-        u = this.upperBound;
-    return (u.x - l.x) * (u.y - l.y) * (u.z - l.z);
-};
-
 
 /**
  * Returns true if the given AABB is fully contained in this AABB.
@@ -278,45 +297,4 @@ AABB.prototype.toWorldFrame = function(frame, target){
     }
 
     return target.setFromPoints(corners);
-};
-
-/**
- * Check if the AABB is hit by a ray.
- * @param  {Ray} ray
- * @return {number}
- */
-AABB.prototype.overlapsRay = function(ray){
-    var t = 0;
-
-    // ray.direction is unit direction vector of ray
-    var dirFracX = 1 / ray._direction.x;
-    var dirFracY = 1 / ray._direction.y;
-    var dirFracZ = 1 / ray._direction.z;
-
-    // this.lowerBound is the corner of AABB with minimal coordinates - left bottom, rt is maximal corner
-    var t1 = (this.lowerBound.x - ray.from.x) * dirFracX;
-    var t2 = (this.upperBound.x - ray.from.x) * dirFracX;
-    var t3 = (this.lowerBound.y - ray.from.y) * dirFracY;
-    var t4 = (this.upperBound.y - ray.from.y) * dirFracY;
-    var t5 = (this.lowerBound.z - ray.from.z) * dirFracZ;
-    var t6 = (this.upperBound.z - ray.from.z) * dirFracZ;
-
-    // var tmin = Math.max(Math.max(Math.min(t1, t2), Math.min(t3, t4)));
-    // var tmax = Math.min(Math.min(Math.max(t1, t2), Math.max(t3, t4)));
-    var tmin = Math.max(Math.max(Math.min(t1, t2), Math.min(t3, t4)), Math.min(t5, t6));
-    var tmax = Math.min(Math.min(Math.max(t1, t2), Math.max(t3, t4)), Math.max(t5, t6));
-
-    // if tmax < 0, ray (line) is intersecting AABB, but whole AABB is behing us
-    if (tmax < 0){
-        //t = tmax;
-        return false;
-    }
-
-    // if tmin > tmax, ray doesn't intersect AABB
-    if (tmin > tmax){
-        //t = tmax;
-        return false;
-    }
-
-    return true;
 };

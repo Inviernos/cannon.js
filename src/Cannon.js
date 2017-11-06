@@ -7,6 +7,7 @@ module.exports = {
     Body :                          require('./objects/Body'),
     Box :                           require('./shapes/Box'),
     Broadphase :                    require('./collision/Broadphase'),
+	Cone :                          require('./shapes/Cone'),
     Constraint :                    require('./constraints/Constraint'),
     ContactEquation :               require('./equations/ContactEquation'),
     Narrowphase :                   require('./world/Narrowphase'),
@@ -45,10 +46,8 @@ module.exports = {
     Sphere :                        require('./shapes/Sphere'),
     SplitSolver :                   require('./solver/SplitSolver'),
     Spring :                        require('./objects/Spring'),
-    Transform :                     require('./math/Transform'),
     Trimesh :                       require('./shapes/Trimesh'),
     Vec3 :                          require('./math/Vec3'),
     Vec3Pool :                      require('./utils/Vec3Pool'),
-	Cone :                          require('./shapes/Cone'),
     World :                         require('./world/World'),
 };

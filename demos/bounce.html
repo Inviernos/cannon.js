@@ -33,7 +33,7 @@
             var groundShape = new CANNON.Plane();
             var groundBody = new CANNON.Body({ mass: 0, material: groundMaterial });
             groundBody.addShape(groundShape);
-            world.addBody(groundBody);
+            world.add(groundBody);
             demo.addVisual(groundBody);
 
             var mass = 10;
@@ -41,36 +41,27 @@
 
             // Shape on plane
             var mat1 = new CANNON.Material();
-            var shapeBody1 = new CANNON.Body({
-                mass: mass,
-                material: mat1,
-                position: new CANNON.Vec3(3*size, size, height)
-            });
+            var shapeBody1 = new CANNON.Body({ mass: mass, material: mat1 });
             shapeBody1.addShape(sphereShape);
+            shapeBody1.position.set(3*size, size, height);
             shapeBody1.linearDamping = damping;
-            world.addBody(shapeBody1);
+            world.add(shapeBody1);
             demo.addVisual(shapeBody1);
 
             var mat2 = new CANNON.Material();
-            var shapeBody2 = new CANNON.Body({
-                mass: mass,
-                material: mat2,
-                position: new CANNON.Vec3(0 , size , height)
-            });
+            var shapeBody2 = new CANNON.Body({ mass: mass, material: mat2 });
             shapeBody2.addShape(sphereShape);
+            shapeBody2.position.set(0 , size , height);
             shapeBody2.linearDamping = damping;
-            world.addBody(shapeBody2);
+            world.add(shapeBody2);
             demo.addVisual(shapeBody2);
 
             var mat3 = new CANNON.Material();
-            var shapeBody3 = new CANNON.Body({
-                mass: mass,
-                material: mat3,
-                position: new CANNON.Vec3(-3*size , size , height)
-            });
+            var shapeBody3 = new CANNON.Body({ mass: mass, material: mat3 });
             shapeBody3.addShape(sphereShape);
+            shapeBody3.position.set(-3*size , size , height);
             shapeBody3.linearDamping = damping;
-            world.addBody(shapeBody3);
+            world.add(shapeBody3);
             demo.addVisual(shapeBody3);
 
             // Create contact material behaviour

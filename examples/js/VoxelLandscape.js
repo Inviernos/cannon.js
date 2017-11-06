@@ -195,7 +195,7 @@ VoxelLandscape.prototype.update = function(){
         // Replace box shapes
         b.addShape(new CANNON.Box(new CANNON.Vec3(b.nx*sx*0.5, b.ny*sy*0.5, b.nz*sz*0.5)));
         //b.aabbNeedsUpdate = true;
-        world.addBody(b);
+        world.add(b);
         //this.boxes.push(box);
     }
 };

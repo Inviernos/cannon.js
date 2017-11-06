@@ -41,10 +41,10 @@ module.exports={
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Inviernos/cannon.js",
+    "url": "https://github.com/schteppe/cannon.js.git"
   },
   "bugs": {
-    "url": "https://github.com/Inviernos/cannon.js/issues"
+    "url": "https://github.com/schteppe/cannon.js/issues"
   },
   "licenses": [
     {
@@ -77,6 +77,7 @@ module.exports = {
     Body :                          _dereq_('./objects/Body'),
     Box :                           _dereq_('./shapes/Box'),
     Broadphase :                    _dereq_('./collision/Broadphase'),
+	Cone :                          _dereq_('./shapes/Cone'),
     Constraint :                    _dereq_('./constraints/Constraint'),
     ContactEquation :               _dereq_('./equations/ContactEquation'),
     Narrowphase :                   _dereq_('./world/Narrowphase'),
@@ -118,11 +119,10 @@ module.exports = {
     Trimesh :                       _dereq_('./shapes/Trimesh'),
     Vec3 :                          _dereq_('./math/Vec3'),
     Vec3Pool :                      _dereq_('./utils/Vec3Pool'),
-	Cone :                          _dereq_('./shapes/Cone'),
     World :                         _dereq_('./world/World'),
 };
 
-},{"../package.json":1,"./collision/AABB":3,"./collision/ArrayCollisionMatrix":4,"./collision/Broadphase":5,"./collision/GridBroadphase":6,"./collision/NaiveBroadphase":7,"./collision/ObjectCollisionMatrix":8,"./collision/Ray":9,"./collision/RaycastResult":10,"./collision/SAPBroadphase":11,"./constraints/ConeTwistConstraint":12,"./constraints/Constraint":13,"./constraints/DistanceConstraint":14,"./constraints/HingeConstraint":15,"./constraints/LockConstraint":16,"./constraints/PointToPointConstraint":17,"./equations/ContactEquation":19,"./equations/Equation":20,"./equations/FrictionEquation":21,"./equations/RotationalEquation":22,"./equations/RotationalMotorEquation":23,"./material/ContactMaterial":24,"./material/Material":25,"./math/Mat3":27,"./math/Quaternion":28,"./math/Vec3":30,"./objects/Body":31,"./objects/RaycastVehicle":32,"./objects/RigidVehicle":33,"./objects/SPHSystem":34,"./objects/Spring":35,"./shapes/Box":37,"./shapes/ConvexPolyhedron":38,"./shapes/Cylinder":39,"./shapes/Heightfield":40,"./shapes/Particle":41,"./shapes/Plane":42,"./shapes/Shape":43,"./shapes/Sphere":44,"./shapes/Trimesh":45,"./solver/GSSolver":46,"./solver/Solver":47,"./solver/SplitSolver":48,"./utils/EventTarget":49,"./utils/Pool":51,"./utils/Vec3Pool":54,"./world/Narrowphase":55,"./world/World":56, "/.shapes/Cone":57}],3:[function(_dereq_,module,exports){
+},{"../package.json":1,"./collision/AABB":3,"./collision/ArrayCollisionMatrix":4,"./collision/Broadphase":5,"./collision/GridBroadphase":6,"./collision/NaiveBroadphase":7,"./collision/ObjectCollisionMatrix":8,"./collision/Ray":9,"./collision/RaycastResult":10,"./collision/SAPBroadphase":11,"./constraints/ConeTwistConstraint":12,"./constraints/Constraint":13,"./constraints/DistanceConstraint":14,"./constraints/HingeConstraint":15,"./constraints/LockConstraint":16,"./constraints/PointToPointConstraint":17,"./equations/ContactEquation":19,"./equations/Equation":20,"./equations/FrictionEquation":21,"./equations/RotationalEquation":22,"./equations/RotationalMotorEquation":23,"./material/ContactMaterial":24,"./material/Material":25,"./math/Mat3":27,"./math/Quaternion":28,"./math/Vec3":30,"./objects/Body":31,"./objects/RaycastVehicle":32,"./objects/RigidVehicle":33,"./objects/SPHSystem":34,"./objects/Spring":35,"./shapes/Box":37,"./shapes/ConvexPolyhedron":38,"./shapes/Cylinder":39,"./shapes/Heightfield":40,"./shapes/Particle":41,"./shapes/Plane":42,"./shapes/Shape":43,"./shapes/Sphere":44,"./shapes/Trimesh":45,"./solver/GSSolver":46,"./solver/Solver":47,"./solver/SplitSolver":48,"./utils/EventTarget":49,"./utils/Pool":51,"./utils/Vec3Pool":54,"./world/Narrowphase":55,"./shapes/Cone":56,"./world/World":57}],3:[function(_dereq_,module,exports){
 var Vec3 = _dereq_('../math/Vec3');
 var Utils = _dereq_('../utils/Utils');
 
@@ -792,6 +792,7 @@ GridBroadphase.prototype.collisionPairs = function(world,pairs1,pairs2){
     var SPHERE =            types.SPHERE,
         PLANE =             types.PLANE,
         BOX =               types.BOX,
+		CONE =              types.CONE,
         COMPOUND =          types.COMPOUND,
         CONVEXPOLYHEDRON =  types.CONVEXPOLYHEDRON;
 
@@ -7579,8 +7580,6 @@ WheelInfo.prototype.updateWheel = function(chassis){
     }
 };
 },{"../collision/RaycastResult":10,"../math/Transform":29,"../math/Vec3":30,"../utils/Utils":53}],37:[function(_dereq_,module,exports){
-
-
 module.exports = Box;
 
 var Shape = _dereq_('./Shape');
@@ -7746,6 +7745,7 @@ var worldCornersTemp = [
     new Vec3(),
     new Vec3()
 ];
+
 Box.prototype.calculateWorldAABB = function(pos,quat,min,max){
 
     var e = this.halfExtents;
@@ -7817,120 +7817,6 @@ Box.prototype.calculateWorldAABB = function(pos,quat,min,max){
     // });
 };
 
-},{"../math/Vec3":30,"./ConvexPolyhedron":38,"./Shape":43}],57:[function(_dereq_,module,exports){
-module.exports = Cone;
-
-var Shape = _dereq_('./Shape');
-var Vec3 = _dereq_('../math/Vec3');
-var ConvexPolyhedron = _dereq_('./ConvexPolyhedron');
-
-/**
- * Conical shape
- * @class Cone
- * @constructor
- * @extends Shape
- * @param{Number} halfHeight
- * @param {Number} radius The radius of the cone, a non-negative number.
- */
-function Cone(height,radius){
-    Shape.call(this, {
-        type: Shape.types.CONE
-    });
-
-	
-	this.height = height;
-	
-    this.radius = radius !== undefined ? radius : 1.0;
-
-    if(this.radius < 0){
-        throw new Error('The sphere radius cannot be negative.');
-    }
-
-    this.convexPolyhedronRepresentation = null;
-
-    this.updateConvexPolyhedronRepresentation();
-    this.updateBoundingSphereRadius();
-}
-
-
-Cone.prototype = new Shape();
-Cone.prototype.constructor = Cone;
-
-
-//need to wor on this
-Cone.prototype.updateConvexPolyhedronRepresentation = function(){
-    
-	//Vertex
-    var V = Vec3;
-	cos = Math.cos,
-    sin = Math.sin;
-    verts = [],
-    axes = [],
-    faces = [],
-    bottomface = [],
-	topface = []
-	N = 8
-	
-	// First bottom point
-    verts.push(new Vec3(this.radius*cos(0),
-                               this.radius*sin(0),
-                               -height*0.5));
-    bottomface.push(0);
-	
-	 // First top point
-    verts.push(new Vec3(0,0,height*0.5));
-   
-    topface.push(1);
-	
-	for(var i=0; i<N; i++){
-        var theta = 2*Math.PI/N * (i+1);
-        var thetaN = 2*Math.PI/N * (i+0.5);
-        if(i<N-1){
-            // Bottom
-            verts.push(new Vec3(radiusBottom*cos(theta),
-                                       radiusBottom*sin(theta),
-                                       -height*0.5));
-            bottomface.push(2 + i);
-     
-
-            // Face
-            faces.push([i+2, 1, 2 * i]);
-        } 
-		else {
-		faces.push([0,1, 8]); // Connect
-        }
-
-  
-    }
-
-
-    var h = new ConvexPolyhedron(verts, indices);
-    this.convexPolyhedronRepresentation = h;
-    h.material = this.material;
-};
-
-
-//Calculate the inertia for a cone
-Cone.prototype.calculateLocalInertia = function(mass,target){
-    target = target || new Vec3();
-    target.x = ((3*mass)/20) + ((this.radius*this.radius)+ (4 * (this.height*this.height)));
-    target.y = ((3*mass)/20) + ((this.radius*this.radius)+ (4 * (this.height*this.height)));
-    target.z = (3*mass* (this.radius*this.radius) )/  10;
-    return target;
-};
-
-//Calculate the volume for a cone
-Cone.prototype.volume = function(){
-    return  (this.radius*this.radius) * Math.PI * ((this.height) / 3.0);
-};
-
-//Update the radius when using bounding spere checks
-Cone.prototype.updateBoundingSphereRadius = function(){
-    this.boundingSphereRadius = this.radius;
-};
-	
-	
-	
 },{"../math/Vec3":30,"./ConvexPolyhedron":38,"./Shape":43}],38:[function(_dereq_,module,exports){
 module.exports = ConvexPolyhedron;
 
@@ -8665,7 +8551,10 @@ var tempWorldVertex = new Vec3();
  * @param {Vec3}        min
  * @param {Vec3}        max
  */
-ConvexPolyhedron.prototype.calculateWorldAABB = function(pos,quat,min,max){
+ConvexPolyhedron.prototype.calculateWorldAABB = function(pos,quat,min,max)
+{
+	
+	
     var n = this.vertices.length, verts = this.vertices;
     var minx,miny,minz,maxx,maxy,maxz;
     for(var i=0; i<n; i++){
@@ -9632,7 +9521,7 @@ Shape.types = {
     HEIGHTFIELD:32,
     PARTICLE:64,
     CYLINDER:128,
-    TRIMESH:256, 
+    TRIMESH:256,
 	CONE:512
 };
 
@@ -11415,6 +11304,46 @@ Narrowphase.prototype.boxParticle = function(si,sj,xi,xj,qi,qj,bi,bj){
     this.convexParticle(si.convexPolyhedronRepresentation,sj,xi,xj,qi,qj,bi,bj,si,sj);
 };
 
+//Cone Collides with Box
+Narrowphase.prototype[Shape.types.BOX | Shape.types.CONE] =
+Narrowphase.prototype.boxCone = function(si,sj,xi,xj,qi,qj,bi,bj)
+{
+    si.convexPolyhedronRepresentation.material = si.material;
+    sj.convexPolyhedronRepresentation.material = sj.material;
+    si.convexPolyhedronRepresentation.collisionResponse = si.collisionResponse;
+    sj.convexPolyhedronRepresentation.collisionResponse = sj.collisionResponse;
+    this.convexConvex(si.convexPolyhedronRepresentation,sj.convexPolyhedronRepresentation,xi,xj,qi,qj,bi,bj,si,sj);
+};
+
+//Cone collides with another cone
+Narrowphase.prototype[Shape.types.CONE | Shape.types.CONE] =
+Narrowphase.prototype.coneCone = function(si,sj,xi,xj,qi,qj,bi,bj)
+{
+    si.convexPolyhedronRepresentation.material = si.material;
+    sj.convexPolyhedronRepresentation.material = sj.material;
+    si.convexPolyhedronRepresentation.collisionResponse = si.collisionResponse;
+    sj.convexPolyhedronRepresentation.collisionResponse = sj.collisionResponse;
+    this.convexConvex(si.convexPolyhedronRepresentation,sj.convexPolyhedronRepresentation,xi,xj,qi,qj,bi,bj,si,sj);
+};
+
+//Cone collides with Convex Shapes like cylinder
+Narrowphase.prototype[Shape.types.CONE | Shape.types.CONVEXPOLYHEDRON] =
+Narrowphase.prototype.coneConvex = function(si,sj,xi,xj,qi,qj,bi,bj)
+{
+    sj.convexPolyhedronRepresentation.material = sj.material;
+    sj.convexPolyhedronRepresentation.collisionResponse = sj.collisionResponse;
+    this.convexConvex(si,sj.convexPolyhedronRepresentation,xi,xj,qi,qj,bi,bj,si,sj);
+};
+
+//Cone collides with particle
+Narrowphase.prototype[Shape.types.CONE | Shape.types.PARTICLE] =
+Narrowphase.prototype.coneParticle = function(si,sj,xi,xj,qi,qj,bi,bj){
+    si.convexPolyhedronRepresentation.material = si.material;
+    si.convexPolyhedronRepresentation.collisionResponse = si.collisionResponse;
+    this.convexParticle(si.convexPolyhedronRepresentation,sj,xi,xj,qi,qj,bi,bj,si,sj);
+};
+
+
 /**
  * @method sphereSphere
  * @param  {Shape}      si
@@ -12036,6 +11965,232 @@ var sphereConvex_worldSpherePointClosestToPlane = new Vec3();
 var sphereConvex_penetrationVec = new Vec3();
 var sphereConvex_sphereToWorldPoint = new Vec3();
 
+
+
+/**
+ * @method sphereCone
+ * @param  {Shape}      si
+ * @param  {Shape}      sj
+ * @param  {Vec3}       xi
+ * @param  {Vec3}       xj
+ * @param  {Quaternion} qi
+ * @param  {Quaternion} qj
+ * @param  {Body}       bi
+ * @param  {Body}       bj
+ */
+Narrowphase.prototype[Shape.types.SPHERE | Shape.types.CONE] =
+Narrowphase.prototype.sphereCone = function(si,sj,xi,xj,qi,qj,bi,bj){
+    var v3pool = this.v3pool;
+    xi.vsub(xj,convex_to_sphere);
+    var normals = sj.convexPolyhedronRepresentation.faceNormals;
+    var faces = sj.faces;
+    var verts = sj.vertices;
+    var R =     si.radius;
+    var penetrating_sides = [];
+	console.log("You collided with sphere");
+
+    // if(convex_to_sphere.norm2() > si.boundingSphereRadius + sj.boundingSphereRadius){
+    //     return;
+    // }
+
+    // Check corners
+    for(var i=0; i!==verts.length; i++){
+        var v = verts[i];
+
+        // World position of corner
+        var worldCorner = sphereConvex_worldCorner;
+        qj.vmult(v,worldCorner);
+        xj.vadd(worldCorner,worldCorner);
+        var sphere_to_corner = sphereConvex_sphereToCorner;
+        worldCorner.vsub(xi, sphere_to_corner);
+        if(sphere_to_corner.norm2() < R * R){
+            found = true;
+            var r = this.createContactEquation(bi,bj,si,sj);
+            r.ri.copy(sphere_to_corner);
+            r.ri.normalize();
+            r.ni.copy(r.ri);
+            r.ri.mult(R,r.ri);
+            worldCorner.vsub(xj,r.rj);
+
+            // Should be relative to the body.
+            r.ri.vadd(xi, r.ri);
+            r.ri.vsub(bi.position, r.ri);
+
+            // Should be relative to the body.
+            r.rj.vadd(xj, r.rj);
+            r.rj.vsub(bj.position, r.rj);
+
+            this.result.push(r);
+            this.createFrictionEquationsFromContact(r, this.frictionResult);
+            return;
+        }
+    }
+
+    // Check side (plane) intersections
+    var found = false;
+    for(var i=0, nfaces=faces.length; i!==nfaces && found===false; i++){
+        var normal = normals[i];
+        var face = faces[i];
+
+        // Get world-transformed normal of the face
+        var worldNormal = sphereConvex_worldNormal;
+        qj.vmult(normal,worldNormal);
+
+        // Get a world vertex from the face
+        var worldPoint = sphereConvex_worldPoint;
+        qj.vmult(verts[face[0]],worldPoint);
+        worldPoint.vadd(xj,worldPoint);
+
+        // Get a point on the sphere, closest to the face normal
+        var worldSpherePointClosestToPlane = sphereConvex_worldSpherePointClosestToPlane;
+        worldNormal.mult(-R, worldSpherePointClosestToPlane);
+        xi.vadd(worldSpherePointClosestToPlane, worldSpherePointClosestToPlane);
+
+        // Vector from a face point to the closest point on the sphere
+        var penetrationVec = sphereConvex_penetrationVec;
+        worldSpherePointClosestToPlane.vsub(worldPoint,penetrationVec);
+
+        // The penetration. Negative value means overlap.
+        var penetration = penetrationVec.dot(worldNormal);
+
+        var worldPointToSphere = sphereConvex_sphereToWorldPoint;
+        xi.vsub(worldPoint, worldPointToSphere);
+
+        if(penetration < 0 && worldPointToSphere.dot(worldNormal)>0){
+            // Intersects plane. Now check if the sphere is inside the face polygon
+            var faceVerts = []; // Face vertices, in world coords
+            for(var j=0, Nverts=face.length; j!==Nverts; j++){
+                var worldVertex = v3pool.get();
+                qj.vmult(verts[face[j]], worldVertex);
+                xj.vadd(worldVertex,worldVertex);
+                faceVerts.push(worldVertex);
+            }
+
+            if(pointInPolygon(faceVerts,worldNormal,xi)){ // Is the sphere center in the face polygon?
+                found = true;
+                var r = this.createContactEquation(bi,bj,si,sj);
+
+                worldNormal.mult(-R, r.ri); // Contact offset, from sphere center to contact
+                worldNormal.negate(r.ni); // Normal pointing out of sphere
+
+                var penetrationVec2 = v3pool.get();
+                worldNormal.mult(-penetration, penetrationVec2);
+                var penetrationSpherePoint = v3pool.get();
+                worldNormal.mult(-R, penetrationSpherePoint);
+
+                //xi.vsub(xj).vadd(penetrationSpherePoint).vadd(penetrationVec2 , r.rj);
+                xi.vsub(xj,r.rj);
+                r.rj.vadd(penetrationSpherePoint,r.rj);
+                r.rj.vadd(penetrationVec2 , r.rj);
+
+                // Should be relative to the body.
+                r.rj.vadd(xj, r.rj);
+                r.rj.vsub(bj.position, r.rj);
+
+                // Should be relative to the body.
+                r.ri.vadd(xi, r.ri);
+                r.ri.vsub(bi.position, r.ri);
+
+                v3pool.release(penetrationVec2);
+                v3pool.release(penetrationSpherePoint);
+
+                this.result.push(r);
+                this.createFrictionEquationsFromContact(r, this.frictionResult);
+
+                // Release world vertices
+                for(var j=0, Nfaceverts=faceVerts.length; j!==Nfaceverts; j++){
+                    v3pool.release(faceVerts[j]);
+                }
+
+                return; // We only expect *one* face contact
+            } else {
+                // Edge?
+                for(var j=0; j!==face.length; j++){
+
+                    // Get two world transformed vertices
+                    var v1 = v3pool.get();
+                    var v2 = v3pool.get();
+                    qj.vmult(verts[face[(j+1)%face.length]], v1);
+                    qj.vmult(verts[face[(j+2)%face.length]], v2);
+                    xj.vadd(v1, v1);
+                    xj.vadd(v2, v2);
+
+                    // Construct edge vector
+                    var edge = sphereConvex_edge;
+                    v2.vsub(v1,edge);
+
+                    // Construct the same vector, but normalized
+                    var edgeUnit = sphereConvex_edgeUnit;
+                    edge.unit(edgeUnit);
+
+                    // p is xi projected onto the edge
+                    var p = v3pool.get();
+                    var v1_to_xi = v3pool.get();
+                    xi.vsub(v1, v1_to_xi);
+                    var dot = v1_to_xi.dot(edgeUnit);
+                    edgeUnit.mult(dot, p);
+                    p.vadd(v1, p);
+
+                    // Compute a vector from p to the center of the sphere
+                    var xi_to_p = v3pool.get();
+                    p.vsub(xi, xi_to_p);
+
+                    // Collision if the edge-sphere distance is less than the radius
+                    // AND if p is in between v1 and v2
+                    if(dot > 0 && dot*dot<edge.norm2() && xi_to_p.norm2() < R*R){ // Collision if the edge-sphere distance is less than the radius
+                        // Edge contact!
+                        var r = this.createContactEquation(bi,bj,si,sj);
+                        p.vsub(xj,r.rj);
+
+                        p.vsub(xi,r.ni);
+                        r.ni.normalize();
+
+                        r.ni.mult(R,r.ri);
+
+                        // Should be relative to the body.
+                        r.rj.vadd(xj, r.rj);
+                        r.rj.vsub(bj.position, r.rj);
+
+                        // Should be relative to the body.
+                        r.ri.vadd(xi, r.ri);
+                        r.ri.vsub(bi.position, r.ri);
+
+                        this.result.push(r);
+                        this.createFrictionEquationsFromContact(r, this.frictionResult);
+
+                        // Release world vertices
+                        for(var j=0, Nfaceverts=faceVerts.length; j!==Nfaceverts; j++){
+                            v3pool.release(faceVerts[j]);
+                        }
+
+                        v3pool.release(v1);
+                        v3pool.release(v2);
+                        v3pool.release(p);
+                        v3pool.release(xi_to_p);
+                        v3pool.release(v1_to_xi);
+
+                        return;
+                    }
+
+                    v3pool.release(v1);
+                    v3pool.release(v2);
+                    v3pool.release(p);
+                    v3pool.release(xi_to_p);
+                    v3pool.release(v1_to_xi);
+                }
+            }
+
+            // Release world vertices
+            for(var j=0, Nfaceverts=faceVerts.length; j!==Nfaceverts; j++){
+                v3pool.release(faceVerts[j]);
+            }
+        }
+    }
+};
+
+
+
+
 /**
  * @method sphereConvex
  * @param  {Shape}      si
@@ -12274,6 +12429,14 @@ var plane_to_corner = new Vec3();
 Narrowphase.prototype[Shape.types.PLANE | Shape.types.BOX] =
 Narrowphase.prototype.planeBox = function(si,sj,xi,xj,qi,qj,bi,bj){
     sj.convexPolyhedronRepresentation.material = sj.material;
+    sj.convexPolyhedronRepresentation.collisionResponse = sj.collisionResponse;
+    this.planeConvex(si,sj.convexPolyhedronRepresentation,xi,xj,qi,qj,bi,bj);
+};
+
+//Plane is colliding with cone
+Narrowphase.prototype[Shape.types.PLANE | Shape.types.CONE] =
+Narrowphase.prototype.planeCone = function(si,sj,xi,xj,qi,qj,bi,bj){
+	sj.convexPolyhedronRepresentation.material = sj.material;
     sj.convexPolyhedronRepresentation.collisionResponse = sj.collisionResponse;
     this.planeConvex(si,sj.convexPolyhedronRepresentation,xi,xj,qi,qj,bi,bj);
 };
@@ -12676,6 +12839,15 @@ Narrowphase.prototype.boxHeightfield = function (si,sj,xi,xj,qi,qj,bi,bj){
     this.convexHeightfield(si.convexPolyhedronRepresentation,sj,xi,xj,qi,qj,bi,bj);
 };
 
+Narrowphase.prototype[Shape.types.CONE | Shape.types.HEIGHTFIELD] =
+Narrowphase.prototype.coneHeightfield = function (si,sj,xi,xj,qi,qj,bi,bj){
+    si.convexPolyhedronRepresentation.material = si.material;
+    si.convexPolyhedronRepresentation.collisionResponse = si.collisionResponse;
+    this.convexHeightfield(si.convexPolyhedronRepresentation,sj,xi,xj,qi,qj,bi,bj);
+};
+
+
+
 var convexHeightfield_tmp1 = new Vec3();
 var convexHeightfield_tmp2 = new Vec3();
 var convexHeightfield_faceList = [0];
@@ -12848,6 +13020,216 @@ Narrowphase.prototype.sphereHeightfield = function (
 };
 
 },{"../collision/AABB":3,"../collision/Ray":9,"../equations/ContactEquation":19,"../equations/FrictionEquation":21,"../math/Quaternion":28,"../math/Transform":29,"../math/Vec3":30,"../shapes/ConvexPolyhedron":38,"../shapes/Shape":43,"../solver/Solver":47,"../utils/Vec3Pool":54}],56:[function(_dereq_,module,exports){
+
+module.exports = Cone;
+
+var Shape = _dereq_('./Shape');
+var Vec3 = _dereq_('../math/Vec3');
+var ConvexPolyhedron = _dereq_('./ConvexPolyhedron');
+
+/**
+ * Conical shape
+ * @class Cone
+ * @constructor
+ * @extends Shape
+ * @param{Number} halfHeight
+ * @param {Number} radius The radius of the cone, a non-negative number.
+ */
+function Cone(height,radius){
+    
+	Shape.call(this);
+
+    this.type = Shape.types.CONE;
+
+
+	
+	this.height = height;
+	
+    this.radius = radius !== undefined ? radius : 1.0;
+
+    if(this.radius < 0){
+        throw new Error('The sphere radius cannot be negative.');
+    }
+
+	this.vertices = null;
+	this.faces = null;
+
+    this.convexPolyhedronRepresentation = null;
+
+    this.updateConvexPolyhedronRepresentation();
+    this.updateBoundingSphereRadius();
+}
+
+
+Cone.prototype = new Shape();
+Cone.prototype.constructor = Cone;
+
+
+//need to wor on this
+Cone.prototype.updateConvexPolyhedronRepresentation = function(){
+    
+	
+	
+	//Vertex
+    var V = Vec3;
+	cos = Math.cos,
+    sin = Math.sin;
+    verts = [],
+    axes = [],
+    faces = [],
+    bottomface = [],
+	topface = []
+	N = 8
+	numVert = 0
+	
+	
+	 // First top point
+    verts.push(new Vec3(0,0,this.height*0.5));
+   
+    numVert++;
+    topface.push(0);
+	
+	// First bottom point
+    verts.push(new Vec3(this.radius*cos(0),
+                               this.radius*sin(0),
+                               -this.height*0.5));
+							 
+	numVert++;
+    bottomface.push(1);
+	
+	
+	for(var i=0; i<N; i++){
+        var theta = 2*Math.PI/N * (i+1);
+        var thetaN = 2*Math.PI/N * (i+0.5);
+        if(i<N-1){
+            // Bottom
+            verts.push(new Vec3(this.radius*cos(theta),
+                                       this.radius*sin(theta),
+                                       -this.height*0.5));
+									   
+									   
+			numVert++;
+            bottomface.push(2 + i);
+     
+
+            // Face
+            faces.push([i+2, 0, i+1]);
+        } 
+		else {
+		  faces.push([1,0, 8]); // Connect
+        }
+		
+		 // Axis: we can cut off half of them if we have even number of segments
+        //if(N % 2 === 1 || i < N / 2){
+          //  axes.push(new Vec3(cos(thetaN), sin(thetaN), 0));
+        //}
+  
+    }
+
+	//axes.push(new Vec3(0,0,1));
+	// Reorder bottom face
+    var temp = [];
+    for(var i=0; i<bottomface.length; i++){
+        temp.push(bottomface[bottomface.length - i - 1]);
+    }
+	faces.push(temp);
+
+	
+	this.vertices = verts;
+	this.faces = faces;
+    var h = new ConvexPolyhedron(verts, faces,axes);
+    this.convexPolyhedronRepresentation = h;
+    h.material = this.material;
+	
+};
+
+
+//Calculate the inertia for a cone
+Cone.prototype.calculateLocalInertia = function(mass,target){
+    target = target || new Vec3();
+    target.x = ((3*mass)/20) + ((this.radius*this.radius)+ (4 * (this.height*this.height)));
+    target.y = ((3*mass)/20) + ((this.radius*this.radius)+ (4 * (this.height*this.height)));
+    target.z = (3*mass* (this.radius*this.radius) )/  10;
+    return target;
+};
+
+//Calculate the volume for a cone
+Cone.prototype.volume = function(){
+    return  (this.radius*this.radius) * Math.PI * ((this.height) / 3.0);
+};
+
+
+
+//Update the radius when using bounding spere checks
+Cone.prototype.updateBoundingSphereRadius = function(){
+    this.boundingSphereRadius = this.radius;
+};
+
+
+var worldCornersTemp = [
+    new Vec3(),
+    new Vec3(),
+    new Vec3(),
+    new Vec3(),
+    new Vec3(),
+    new Vec3(),
+    new Vec3(),
+    new Vec3()
+];
+
+Cone.prototype.calculateWorldAABB = function(pos,quat,min,max)
+{
+
+    var h = this.height/2;
+	var r = this.radius;
+	
+    worldCornersTemp[0].set(r, r, h);
+    worldCornersTemp[1].set(-r,  r, h);
+    worldCornersTemp[2].set(-r, -r, h);
+    worldCornersTemp[3].set(-r, -r, -h);
+    worldCornersTemp[4].set(r, -r, -h);
+    worldCornersTemp[5].set(r,  r, -h);
+    worldCornersTemp[6].set(-r,  r, -h);
+    worldCornersTemp[7].set(r, -r,  h);
+
+    var wc = worldCornersTemp[0];
+    quat.vmult(wc, wc);
+    pos.vadd(wc, wc);
+    max.copy(wc);
+    min.copy(wc);
+    for(var i=1; i<8; i++){
+        var wc = worldCornersTemp[i];
+        quat.vmult(wc, wc);
+        pos.vadd(wc, wc);
+        var x = wc.x;
+        var y = wc.y;
+        var z = wc.z;
+        if(x > max.x){
+            max.x = x;
+        }
+        if(y > max.y){
+            max.y = y;
+        }
+        if(z > max.z){
+            max.z = z;
+        }
+
+        if(x < min.x){
+            min.x = x;
+        }
+        if(y < min.y){
+            min.y = y;
+        }
+        if(z < min.z){
+            min.z = z;
+        }
+    }
+	
+	
+}
+
+
+},{"../math/Vec3":30,"./ConvexPolyhedron":38,"./Shape":43}],57:[function(_dereq_,module,exports){
 /* global performance */
 
 module.exports = World;

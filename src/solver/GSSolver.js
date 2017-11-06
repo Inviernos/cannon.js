@@ -76,7 +76,9 @@ GSSolver.prototype.solve = function(dt,world){
                 vlambda=b.vlambda,
                 wlambda=b.wlambda;
             vlambda.set(0,0,0);
-            wlambda.set(0,0,0);
+            if(wlambda){
+                wlambda.set(0,0,0);
+            }
         }
 
         // Iterate over equations
@@ -120,19 +122,10 @@ GSSolver.prototype.solve = function(dt,world){
             var b=bodies[i],
                 v=b.velocity,
                 w=b.angularVelocity;
-
-            b.vlambda.vmul(b.linearFactor, b.vlambda);
             v.vadd(b.vlambda, v);
-
-            b.wlambda.vmul(b.angularFactor, b.wlambda);
-            w.vadd(b.wlambda, w);
-        }
-
-        // Set the .multiplier property of each equation
-        var l = equations.length;
-        var invDt = 1 / h;
-        while(l--){
-            equations[l].multiplier = lambda[l] * invDt;
+            if(w){
+                w.vadd(b.wlambda, w);
+            }
         }
     }
 

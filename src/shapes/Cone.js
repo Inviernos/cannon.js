@@ -2,6 +2,7 @@ module.exports = Cone;
 
 var Shape = require('./Shape');
 var Vec3 = require('../math/Vec3');
+var ConvexPolyhedron = require('./ConvexPolyhedron');
 
 /**
  * Conical shape
@@ -12,9 +13,11 @@ var Vec3 = require('../math/Vec3');
  * @param {Number} radius The radius of the cone, a non-negative number.
  */
 function Cone(height,radius){
-    Shape.call(this, {
-        type: Shape.types.CONE
-    });
+    
+	Shape.call(this);
+
+    this.type = Shape.types.CONE;
+
 
 	
 	this.height = height;
@@ -53,11 +56,11 @@ Cone.prototype.updateConvexPolyhedronRepresentation = function(){
 	// First bottom point
     verts.push(new Vec3(this.radius*cos(0),
                                this.radius*sin(0),
-                               -height*0.5));
+                               -this.height*0.5));
     bottomface.push(0);
 	
 	 // First top point
-    verts.push(new Vec3(0,0,height*0.5));
+    verts.push(new Vec3(0,0,this.height*0.5));
    
     topface.push(1);
 	
@@ -66,14 +69,14 @@ Cone.prototype.updateConvexPolyhedronRepresentation = function(){
         var thetaN = 2*Math.PI/N * (i+0.5);
         if(i<N-1){
             // Bottom
-            verts.push(new Vec3(radiusBottom*cos(theta),
-                                       radiusBottom*sin(theta),
-                                       -height*0.5));
+            verts.push(new Vec3(this.radius*cos(theta),
+                                       this.radius*sin(theta),
+                                       -this.height*0.5));
             bottomface.push(2 + i);
      
 
             // Face
-            faces.push([i+2, 1, 2 * i]);
+            faces.push([i+2, 1, i]);
         } 
 		else {
 		faces.push([0,1, 8]); // Connect
@@ -82,7 +85,12 @@ Cone.prototype.updateConvexPolyhedronRepresentation = function(){
   
     }
 
-
+	 // Reorder bottom face
+    var temp = [];
+    for(var i=0; i<bottomface.length; i++){
+        temp.push(bottomface[bottomface.length - i - 1]);
+    }
+	faces.push(temp);
     var h = new ConvexPolyhedron(verts, indices);
     this.convexPolyhedronRepresentation = h;
     h.material = this.material;
@@ -103,7 +111,9 @@ Cone.prototype.volume = function(){
     return  (this.radius*this.radius) * Math.PI * ((this.height) / 3.0);
 };
 
+
+
 //Update the radius when using bounding spere checks
-Cone.prototype.updateBoundingSphereRadius() = function(){
+Cone.prototype.updateBoundingSphereRadius = function(){
     this.boundingSphereRadius = this.radius;
 };

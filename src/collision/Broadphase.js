@@ -52,6 +52,7 @@ Broadphase.prototype.collisionPairs = function(world,p1,p2){
  * @param {Body} bodyB
  * @return {bool}
  */
+var Broadphase_needBroadphaseCollision_STATIC_OR_KINEMATIC = Body.STATIC | Body.KINEMATIC;
 Broadphase.prototype.needBroadphaseCollision = function(bodyA,bodyB){
 
     // Check collision filter masks
@@ -60,9 +61,9 @@ Broadphase.prototype.needBroadphaseCollision = function(bodyA,bodyB){
     }
 
     // Check types
-    if(((bodyA.type & Body.STATIC)!==0 || bodyA.sleepState === Body.SLEEPING) &&
-       ((bodyB.type & Body.STATIC)!==0 || bodyB.sleepState === Body.SLEEPING)) {
-        // Both bodies are static or sleeping. Skip.
+    if(((bodyA.type & Broadphase_needBroadphaseCollision_STATIC_OR_KINEMATIC)!==0 || bodyA.sleepState === Body.SLEEPING) &&
+       ((bodyB.type & Broadphase_needBroadphaseCollision_STATIC_OR_KINEMATIC)!==0 || bodyB.sleepState === Body.SLEEPING)) {
+        // Both bodies are static, kinematic or sleeping. Skip.
         return false;
     }
 

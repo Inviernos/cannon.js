@@ -25,13 +25,12 @@
             var world = demo.getWorld();
 
             world.gravity.set(0,0,-20);
+            world.broadphase = new CANNON.NaiveBroadphase();
             world.solver.iterations = 20;
             world.defaultContactMaterial.contactEquationStiffness = 1e10;
             world.defaultContactMaterial.contactEquationRelaxation = 10;
 
-            var bunnyBody = new CANNON.Body({
-                mass: 1
-            });
+            var bunnyBody = new CANNON.Body({ mass: 1 });
             for(var i=0; i<bunny.length; i++){
 
                 var rawVerts = bunny[i].verts;
@@ -67,17 +66,15 @@
             var z180 = new CANNON.Quaternion();
             z180.setFromAxisAngle(new CANNON.Vec3(0,0,1),Math.PI);
             bunnyBody.quaternion = z180.mult(bunnyBody.quaternion);
-            world.addBody(bunnyBody);
+            world.add(bunnyBody);
             demo.addVisual(bunnyBody);
 
             // ground plane
             var groundShape = new CANNON.Plane();
-            var groundBody = new CANNON.Body({
-                mass: 0,
-                position: new CANNON.Vec3(0,0,-5)
-            });
+            var groundBody = new CANNON.Body({ mass: 0 });
             groundBody.addShape(groundShape);
-            world.addBody(groundBody);
+            groundBody.position.set(0,0,-5);
+            world.add(groundBody);
             demo.addVisual(groundBody);
 
         });

@@ -25,9 +25,9 @@ var Transform = require('../math/Transform');
  * @todo Automatically merge coplanar polygons in constructor.
  */
 function ConvexPolyhedron(points, faces, uniqueAxes) {
-    Shape.call(this, {
-        type: Shape.types.CONVEXPOLYHEDRON
-    });
+    var that = this;
+    Shape.call(this);
+    this.type = Shape.types.CONVEXPOLYHEDRON;
 
     /**
      * Array of Vec3

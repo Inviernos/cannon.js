@@ -45,22 +45,54 @@
 
       function createBoxPolyhedron(size){
           size = size || 1;
-          var cone = new CANNON.CONE(10,5);
-          return cone.convexPolyhedronRepresentation;
+          var box = new CANNON.Box(new CANNON.Vec3(size,size,size));
+		  
+          return box;
       }
-
+	
+	  function createCone(height,radius)
+	  {
+		 var cone = new CANNON.Cone(height,radius);
+		 return cone;
+	  }
+	
+	  
       // Various shapes
       demo.addScene("various",function(){
           var world = setupWorld(demo);
           // ConvexPolyhedron box shape
-          var size = 0.5;
+          var size = 1;
           var convexShape = createBoxPolyhedron(size);
           var mass = 10;
           var boxbody = new CANNON.Body({ mass: mass });
-          boxbody.addShape(convexShape);
-          boxbody.position.set(1,0,size+1);
-          world.addBody(boxbody);
-          demo.addVisual(boxbody);
+		  //var boxbody2 = new CANNON.Body({ mass: mass });
+		  
+            boxbody.addShape(convexShape);
+		  //boxbody2.addShape(convexShape);
+          boxbody.position.set(0,5,20);
+		 // boxbody2.position.set(0,0,50);
+
+        world.addBody(boxbody);
+        demo.addVisual(boxbody);
+		  
+		  //world.addBody(boxbody2);
+         // demo.addVisual(boxbody2);
+		    
+			// ConvexPolyhedron cone shape
+          var cone = createCone(2,1);
+		  //var cone= new CANNON.Cylinder(.5,.5,2,20);
+          var mass2 = 10;
+          var conebody = new CANNON.Body({ mass: mass2 });
+		  
+		  
+          conebody.addShape(cone);
+          conebody.position.set(0,0,10);
+
+          world.addBody(conebody);
+          demo.addVisual(conebody);
+		  
+		  console.log("material: " + cone.material);
+		  //world.gravity = new CANNON.Vec3(0,0,0);
 
           // ConvexPolyhedron tetra shape
           var tetraShape = createTetra();
@@ -69,23 +101,28 @@
           tetraBody.position.set(5,-3,size+1);
           world.addBody(tetraBody);
           demo.addVisual(tetraBody);
-
-          // ConvexPolyhedron cylinder shape
+		  
+		  
+		  // ConvexPolyhedron cylinder shape
           var num = 20;
-          var verts = [];
-          var normals = [];
-          var faces = [];
-          var bottomface = [];
-          var topface = [];
+          //var verts = [];
+          //var normals = [];
+          //var faces = [];
+          //var bottomface = [];
+          //var topface = [];
           var L = 2, R = 0.5;
           var cylinderShape = new CANNON.Cylinder(R,R,L,num);
           var cylinderBody = new CANNON.Body({ mass: mass });
+		  //var cylinderShape = new CANNON.Sphere(2);
+		  //var cylinderBody = new CANNON.Body({ mass: mass });
           cylinderBody.addShape(cylinderShape);
-          cylinderBody.position.set(0,0,size*4+1);
-          cylinderBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0,1,0),Math.PI/3);
-          world.addBody(cylinderBody);
+          cylinderBody.position.set(.5,0,20);
+         // cylinderBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0,1,0),Math.PI/3);
+          world.add(cylinderBody);
           demo.addVisual(cylinderBody);
 
+			
+          
         });
 
 

@@ -251,7 +251,7 @@ Ray.prototype.intersectShape = function(shape, quat, position, body){
 
     var intersectMethod = this[shape.type];
     if(intersectMethod){
-        intersectMethod.call(this, shape, quat, position, body, shape);
+        intersectMethod.call(this, shape, quat, position, body);
     }
 };
 
@@ -274,8 +274,8 @@ var tmpRaycastResult = new RaycastResult();
  * @param  {Vec3} position
  * @param  {Body} body
  */
-Ray.prototype.intersectBox = function(shape, quat, position, body, reportedShape){
-    return this.intersectConvex(shape.convexPolyhedronRepresentation, quat, position, body, reportedShape);
+Ray.prototype.intersectBox = function(shape, quat, position, body){
+    return this.intersectConvex(shape.convexPolyhedronRepresentation, quat, position, body);
 };
 Ray.prototype[Shape.types.BOX] = Ray.prototype.intersectBox;
 
@@ -287,7 +287,7 @@ Ray.prototype[Shape.types.BOX] = Ray.prototype.intersectBox;
  * @param  {Vec3} position
  * @param  {Body} body
  */
-Ray.prototype.intersectPlane = function(shape, quat, position, body, reportedShape){
+Ray.prototype.intersectPlane = function(shape, quat, position, body){
     var from = this.from;
     var to = this.to;
     var direction = this._direction;
@@ -327,7 +327,7 @@ Ray.prototype.intersectPlane = function(shape, quat, position, body, reportedSha
     direction.scale(t, dir_scaled_with_t);
     from.vadd(dir_scaled_with_t, hitPointWorld);
 
-    this.reportIntersection(worldNormal, hitPointWorld, reportedShape, body, -1);
+    this.reportIntersection(worldNormal, hitPointWorld, shape, body, -1);
 };
 Ray.prototype[Shape.types.PLANE] = Ray.prototype.intersectPlane;
 
@@ -350,10 +350,6 @@ Ray.prototype.getAABB = function(result){
 var intersectConvexOptions = {
     faceList: [0]
 };
-var worldPillarOffset = new Vec3();
-var intersectHeightfield_localRay = new Ray();
-var intersectHeightfield_index = [];
-var intersectHeightfield_minMax = [];
 
 /**
  * @method intersectHeightfield
@@ -363,52 +359,66 @@ var intersectHeightfield_minMax = [];
  * @param  {Vec3} position
  * @param  {Body} body
  */
-Ray.prototype.intersectHeightfield = function(shape, quat, position, body, reportedShape){
+Ray.prototype.intersectHeightfield = function(shape, quat, position, body){
     var data = shape.data,
-        w = shape.elementSize;
+        w = shape.elementSize,
+        worldPillarOffset = new Vec3();
 
     // Convert the ray to local heightfield coordinates
-    var localRay = intersectHeightfield_localRay; //new Ray(this.from, this.to);
-    localRay.from.copy(this.from);
-    localRay.to.copy(this.to);
+    var localRay = new Ray(this.from, this.to);
     Transform.pointToLocalFrame(position, quat, localRay.from, localRay.from);
     Transform.pointToLocalFrame(position, quat, localRay.to, localRay.to);
-    localRay._updateDirection();
 
     // Get the index of the data points to test against
-    var index = intersectHeightfield_index;
-    var iMinX, iMinY, iMaxX, iMaxY;
+    var index = [];
+    var iMinX = null;
+    var iMinY = null;
+    var iMaxX = null;
+    var iMaxY = null;
 
-    // Set to max
-    iMinX = iMinY = 0;
-    iMaxX = iMaxY = shape.data.length - 1;
+    var inside = shape.getIndexOfPosition(localRay.from.x, localRay.from.y, index, false);
+    if(inside){
+        iMinX = index[0];
+        iMinY = index[1];
+        iMaxX = index[0];
+        iMaxY = index[1];
+    }
+    inside = shape.getIndexOfPosition(localRay.to.x, localRay.to.y, index, false);
+    if(inside){
+        if (iMinX === null || index[0] < iMinX) { iMinX = index[0]; }
+        if (iMaxX === null || index[0] > iMaxX) { iMaxX = index[0]; }
+        if (iMinY === null || index[1] < iMinY) { iMinY = index[1]; }
+        if (iMaxY === null || index[1] > iMaxY) { iMaxY = index[1]; }
+    }
 
-    var aabb = new AABB();
-    localRay.getAABB(aabb);
+    if(iMinX === null){
+        return;
+    }
 
-    shape.getIndexOfPosition(aabb.lowerBound.x, aabb.lowerBound.y, index, true);
-    iMinX = Math.max(iMinX, index[0]);
-    iMinY = Math.max(iMinY, index[1]);
-    shape.getIndexOfPosition(aabb.upperBound.x, aabb.upperBound.y, index, true);
-    iMaxX = Math.min(iMaxX, index[0] + 1);
-    iMaxY = Math.min(iMaxY, index[1] + 1);
+    var minMax = [];
+    shape.getRectMinMax(iMinX, iMinY, iMaxX, iMaxY, minMax);
+    var min = minMax[0];
+    var max = minMax[1];
 
-    for(var i = iMinX; i < iMaxX; i++){
-        for(var j = iMinY; j < iMaxY; j++){
+    // // Bail out if the ray can't touch the bounding box
+    // // TODO
+    // var aabb = new AABB();
+    // this.getAABB(aabb);
+    // if(aabb.intersects()){
+    //     return;
+    // }
+
+    for(var i = iMinX; i <= iMaxX; i++){
+        for(var j = iMinY; j <= iMaxY; j++){
 
             if(this.result._shouldStop){
                 return;
             }
 
-            shape.getAabbAtIndex(i, j, aabb);
-            if(!aabb.overlapsRay(localRay)){
-                continue;
-            }
-
             // Lower triangle
             shape.getConvexTrianglePillar(i, j, false);
             Transform.pointToWorldFrame(position, quat, shape.pillarOffset, worldPillarOffset);
-            this.intersectConvex(shape.pillarConvex, quat, worldPillarOffset, body, reportedShape, intersectConvexOptions);
+            this.intersectConvex(shape.pillarConvex, quat, worldPillarOffset, body, intersectConvexOptions);
 
             if(this.result._shouldStop){
                 return;
@@ -417,7 +427,7 @@ Ray.prototype.intersectHeightfield = function(shape, quat, position, body, repor
             // Upper triangle
             shape.getConvexTrianglePillar(i, j, true);
             Transform.pointToWorldFrame(position, quat, shape.pillarOffset, worldPillarOffset);
-            this.intersectConvex(shape.pillarConvex, quat, worldPillarOffset, body, reportedShape, intersectConvexOptions);
+            this.intersectConvex(shape.pillarConvex, quat, worldPillarOffset, body, intersectConvexOptions);
         }
     }
 };
@@ -434,7 +444,7 @@ var Ray_intersectSphere_normal = new Vec3();
  * @param  {Vec3} position
  * @param  {Body} body
  */
-Ray.prototype.intersectSphere = function(shape, quat, position, body, reportedShape){
+Ray.prototype.intersectSphere = function(shape, quat, position, body){
     var from = this.from,
         to = this.to,
         r = shape.radius;
@@ -459,7 +469,7 @@ Ray.prototype.intersectSphere = function(shape, quat, position, body, reportedSh
         intersectionPoint.vsub(position, normal);
         normal.normalize();
 
-        this.reportIntersection(normal, intersectionPoint, reportedShape, body, -1);
+        this.reportIntersection(normal, intersectionPoint, shape, body, -1);
 
     } else {
         var d1 = (- b - Math.sqrt(delta)) / (2 * a);
@@ -469,7 +479,7 @@ Ray.prototype.intersectSphere = function(shape, quat, position, body, reportedSh
             from.lerp(to, d1, intersectionPoint);
             intersectionPoint.vsub(position, normal);
             normal.normalize();
-            this.reportIntersection(normal, intersectionPoint, reportedShape, body, -1);
+            this.reportIntersection(normal, intersectionPoint, shape, body, -1);
         }
 
         if(this.result._shouldStop){
@@ -480,7 +490,7 @@ Ray.prototype.intersectSphere = function(shape, quat, position, body, reportedSh
             from.lerp(to, d2, intersectionPoint);
             intersectionPoint.vsub(position, normal);
             normal.normalize();
-            this.reportIntersection(normal, intersectionPoint, reportedShape, body, -1);
+            this.reportIntersection(normal, intersectionPoint, shape, body, -1);
         }
     }
 };
@@ -507,7 +517,6 @@ Ray.prototype.intersectConvex = function intersectConvex(
     quat,
     position,
     body,
-    reportedShape,
     options
 ){
     var minDistNormal = intersectConvex_minDistNormal;
@@ -594,7 +603,7 @@ Ray.prototype.intersectConvex = function intersectConvex(
                 continue;
             }
 
-            this.reportIntersection(normal, intersectPoint, reportedShape, body, fi);
+            this.reportIntersection(normal, intersectPoint, shape, body, fi);
         }
         // }
     }
@@ -627,7 +636,6 @@ Ray.prototype.intersectTrimesh = function intersectTrimesh(
     quat,
     position,
     body,
-    reportedShape,
     options
 ){
     var normal = intersectTrimesh_normal;
@@ -659,19 +667,11 @@ Ray.prototype.intersectTrimesh = function intersectTrimesh(
 
     // Transform ray to local space!
     Transform.vectorToLocalFrame(position, quat, direction, localDirection);
+    //body.vectorToLocalFrame(direction, localDirection);
     Transform.pointToLocalFrame(position, quat, from, localFrom);
+    //body.pointToLocalFrame(from, localFrom);
     Transform.pointToLocalFrame(position, quat, to, localTo);
-
-    localTo.x *= mesh.scale.x;
-    localTo.y *= mesh.scale.y;
-    localTo.z *= mesh.scale.z;
-    localFrom.x *= mesh.scale.x;
-    localFrom.y *= mesh.scale.y;
-    localFrom.z *= mesh.scale.z;
-
-    localTo.vsub(localFrom, localDirection);
-    localDirection.normalize();
-
+    //body.pointToLocalFrame(to, localTo);
     var fromToDistanceSquared = localFrom.distanceSquared(localTo);
 
     mesh.tree.rayQuery(this, treeTransform, triangles);
@@ -689,6 +689,9 @@ Ray.prototype.intersectTrimesh = function intersectTrimesh(
 
         // ...but make it relative to the ray from. We'll fix this later.
         a.vsub(localFrom,vector);
+
+        // Get plane normal
+        // quat.vmult(normal, normal);
 
         // If this dot product is negative, we have something interesting
         var dot = localDirection.dot(normal);
@@ -722,8 +725,10 @@ Ray.prototype.intersectTrimesh = function intersectTrimesh(
 
         // transform intersectpoint and normal to world
         Transform.vectorToWorldFrame(quat, normal, worldNormal);
+        //body.vectorToWorldFrame(normal, worldNormal);
         Transform.pointToWorldFrame(position, quat, intersectPoint, worldIntersectPoint);
-        this.reportIntersection(worldNormal, worldIntersectPoint, reportedShape, body, trianglesIndex);
+        //body.pointToWorldFrame(intersectPoint, worldIntersectPoint);
+        this.reportIntersection(worldNormal, worldIntersectPoint, mesh, body, trianglesIndex);
     }
     triangles.length = 0;
 };
