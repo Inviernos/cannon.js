@@ -13137,7 +13137,7 @@ Cone.prototype.updateConvexPolyhedronRepresentation = function(){
 	
 	this.vertices = verts;
 	this.faces = faces;
-    var h = new ConvexPolyhedron(verts, faces,axes);
+    var h = new ConvexPolyhedron(verts, faces);
     this.convexPolyhedronRepresentation = h;
     h.material = this.material;
 	
